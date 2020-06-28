@@ -1,19 +1,28 @@
 {
   "name": "vue-gl-transitions",
   "version": "0.1.0",
-  "private": true,
+  "main": "./dist/vue-gl-transitions.js",
+  "files": [
+    "dist"
+  ],
+  "private": false,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "package": "vue-cli-service build --target lib --vue-gl-transitions main ./src/components/index.ts"
   },
   "dependencies": {
     "core-js": "^3.6.5",
+    "gl-texture2d": "^2.1.0",
+    "gl-transition": "^1.13.0",
+    "gl-transitions": "^1.43.0",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",
     "vue-property-decorator": "^8.4.2"
   },
   "devDependencies": {
+    "@types/gl-texture2d": "^2.1.2",
     "@typescript-eslint/eslint-plugin": "^2.33.0",
     "@typescript-eslint/parser": "^2.33.0",
     "@vue/cli-plugin-babel": "~4.4.0",
