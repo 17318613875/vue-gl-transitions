@@ -1,5 +1,5 @@
 interface DefaultParams {
-  [paramKey: string]: string;
+  [paramKey: string]: string | number;
 }
 interface ParamsTypes {
   direction?: string;
@@ -10,11 +10,7 @@ interface Transition {
   name: string;
   defaultParams?: DefaultParams;
   paramsTypes?: ParamsTypes;
-  glsl?: string;
-}
-
-interface TransitionParams {
-  [paramKey: string]: string;
+  glsl: string;
 }
 
 interface GLTransitionI extends Transition {
