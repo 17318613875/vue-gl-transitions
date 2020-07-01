@@ -21,6 +21,7 @@ type That = {
   GlTo: Texture;
   from: Source;
   to: Source;
+  glSize: number[];
 };
 type ContCextAttributes = {
   alpha?: boolean;
@@ -101,11 +102,6 @@ export const LoadImg = (src: string): Promise<HTMLImageElement> => {
     img.src = src;
   });
 };
-
-/**
- * @description 通过HTML Element 加载视频
- * @param video HTMLVideoElement
- */
 interface VideoR extends HTMLVideoElement {
   reqId: number;
   trackingCallBack: () => void;
@@ -121,29 +117,34 @@ function startTracking(ev: Event) {
 }
 function seekTrack(ev: Event) {
   const video = ev.target as VideoR;
-  if (video) {
-    video.trackingCallBack();
-  }
+  video && video.trackingCallBack();
 }
 function stopTracking(ev: Event) {
   const video = ev.target as VideoR;
-  cancelAnimationFrame(video.reqId);
+  video && cancelAnimationFrame(video.reqId);
 }
 
+/**
+ * @description 通过HTML Element 加载视频
+ * @param video HTMLVideoElement
+ */
 export const LoadVideo = (
   video: HTMLVideoElement,
   that: That,
   keyName: "GlFrom" | "GlTo"
 ): Promise<HTMLVideoElement> => {
+  const [width, height] = that.glSize;
+  video.width = width;
+  video.height = height;
+  SetCrossOrigin(video.src, video);
+  (video as VideoR).trackingCallBack = () => {
+    that[keyName] = createTexture(
+      that.glContext as WebGLRenderingContext,
+      video
+    );
+    that.progressSync = video.currentTime;
+  };
   return new Promise((resolve) => {
-    SetCrossOrigin(video.src, video);
-    (video as VideoR).trackingCallBack = () => {
-      that[keyName] = createTexture(
-        that.glContext as WebGLRenderingContext,
-        video
-      );
-      that.progressSync = video.currentTime;
-    };
     video.removeEventListener("play", startTracking);
     video.addEventListener("play", startTracking);
     video.removeEventListener("pause", stopTracking);
