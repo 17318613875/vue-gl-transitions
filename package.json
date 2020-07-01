@@ -1,6 +1,6 @@
 {
   "name": "vue-gl-transitions",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Vue Gl Transitions",
   "main": "./dist/vue-gl-transitions.js",
   "author": "binbin@mgtv.com",
@@ -13,7 +13,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build --dest docs",
     "lint": "vue-cli-service lint",
-    "package": "vue-cli-service build --target wc --name vue-gl-transitions ./src/components/VueGlTransition.vue"
+    "package": "vue-cli-service build --target wc --name vue-gl-transitions ./src/components/index.js"
   },
   "dependencies": {
     "core-js": "^3.6.5",
