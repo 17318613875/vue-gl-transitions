@@ -1,6 +1,6 @@
 {
   "name": "vue-gl-transitions",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Vue Gl Transitions",
   "main": "./dist/vue-gl-transitions.umd.min.js",
   "types": "./types/vue-gl-transitions.d.ts",
