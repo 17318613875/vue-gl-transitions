@@ -64,8 +64,8 @@ export default class VueGlTransition extends Vue {
    * 功能参数
    */
   private loadedSourceFlag = false;
-  private GlFrom!: Texture;
-  private GlTo!: Texture;
+  public GlFrom!: Texture;
+  public GlTo!: Texture;
 
   /**
    * 功能函数
@@ -75,8 +75,8 @@ export default class VueGlTransition extends Vue {
     const glContext_ = glContext || this.glContext;
     glContext_ &&
       Promise.all([
-        LoadSource(this.from, this, "GlFrom"),
-        LoadSource(this.to, this, "GlTo")
+        LoadSource.call(this, "GlFrom"),
+        LoadSource.call(this, "GlTo")
       ]).then(([from, to]) => {
         this.GlFrom = createTexture(glContext_, from);
         this.GlTo = createTexture(glContext_, to);

@@ -19,6 +19,8 @@ type That = {
   glContext: WebGLRenderingContext | void;
   GlFrom: Texture;
   GlTo: Texture;
+  from: Source;
+  to: Source;
 };
 type ContCextAttributes = {
   alpha?: boolean;
@@ -104,39 +106,51 @@ export const LoadImg = (src: string): Promise<HTMLImageElement> => {
  * @description 通过HTML Element 加载视频
  * @param video HTMLVideoElement
  */
-interface EventR extends EventTarget {
-  reqId: number;
-}
 interface VideoR extends HTMLVideoElement {
   reqId: number;
+  trackingCallBack: () => void;
 }
-function startTracking(
-  { target }: Event,
-  that: That,
-  keyName: "GlFrom" | "GlTo"
-) {
-  if (target) {
-    (target as EventR).reqId = requestAnimationFrame(function play() {
-      that[keyName] = createTexture(
-        that.glContext as WebGLRenderingContext,
-        target as HTMLVideoElement
-      );
-      that.progressSync = (target as HTMLVideoElement).currentTime;
-      (target as EventR).reqId = requestAnimationFrame(play);
+function startTracking(ev: Event) {
+  const video = ev.target as VideoR;
+  if (video) {
+    video.reqId = requestAnimationFrame(function play() {
+      video.reqId = requestAnimationFrame(play);
+      video.trackingCallBack();
     });
   }
 }
+function seekTrack(ev: Event) {
+  const video = ev.target as VideoR;
+  if (video) {
+    video.trackingCallBack();
+  }
+}
+function stopTracking(ev: Event) {
+  const video = ev.target as VideoR;
+  cancelAnimationFrame(video.reqId);
+}
+
 export const LoadVideo = (
   video: HTMLVideoElement,
   that: That,
   keyName: "GlFrom" | "GlTo"
 ): Promise<HTMLVideoElement> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     SetCrossOrigin(video.src, video);
-    video.onloadeddata = () => resolve(video);
-    video.onplay = (event) => startTracking(event, that, keyName);
-    video.onpause = () => cancelAnimationFrame((video as VideoR).reqId);
-    video.onerror = reject;
+    (video as VideoR).trackingCallBack = () => {
+      that[keyName] = createTexture(
+        that.glContext as WebGLRenderingContext,
+        video
+      );
+      that.progressSync = video.currentTime;
+    };
+    video.removeEventListener("play", startTracking);
+    video.addEventListener("play", startTracking);
+    video.removeEventListener("pause", stopTracking);
+    video.addEventListener("pause", stopTracking);
+    video.removeEventListener("seeked", seekTrack);
+    video.addEventListener("seeked", seekTrack);
+    resolve(video);
   });
 };
 
@@ -145,10 +159,10 @@ export const LoadVideo = (
  * @param source
  */
 export async function LoadSource(
-  source: Source,
-  that: object,
+  this: That,
   keyName: "GlFrom" | "GlTo"
 ): Promise<Source> {
+  const source = keyName === "GlFrom" ? this.from : this.to;
   let target!: Source;
   if (typeof source === "string") {
     if (/\.(jpg|png|jpeg)$/.test(source)) {
@@ -158,11 +172,7 @@ export async function LoadSource(
     const tagName = (source as HTMLElement).tagName;
     switch (tagName) {
       case "VIDEO":
-        target = await LoadVideo(
-          source as HTMLVideoElement,
-          that as That,
-          keyName
-        );
+        target = await LoadVideo(source as HTMLVideoElement, this, keyName);
         break;
       case "IMG":
         target = source as HTMLImageElement;
