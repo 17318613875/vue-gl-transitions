@@ -493,6 +493,94 @@ module.exports = !fails(function () {
 
 /***/ }),
 
+/***/ "145e":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var toObject = __webpack_require__("7b0b");
+var toAbsoluteIndex = __webpack_require__("23cb");
+var toLength = __webpack_require__("50c4");
+
+var min = Math.min;
+
+// `Array.prototype.copyWithin` method implementation
+// https://tc39.github.io/ecma262/#sec-array.prototype.copywithin
+module.exports = [].copyWithin || function copyWithin(target /* = 0 */, start /* = 0, end = @length */) {
+  var O = toObject(this);
+  var len = toLength(O.length);
+  var to = toAbsoluteIndex(target, len);
+  var from = toAbsoluteIndex(start, len);
+  var end = arguments.length > 2 ? arguments[2] : undefined;
+  var count = min((end === undefined ? len : toAbsoluteIndex(end, len)) - from, len - to);
+  var inc = 1;
+  if (from < to && to < from + count) {
+    inc = -1;
+    from += count - 1;
+    to += count - 1;
+  }
+  while (count-- > 0) {
+    if (from in O) O[to] = O[from];
+    else delete O[to];
+    to += inc;
+    from += inc;
+  } return O;
+};
+
+
+/***/ }),
+
+/***/ "159b":
+/***/ (function(module, exports, __webpack_require__) {
+
+var global = __webpack_require__("da84");
+var DOMIterables = __webpack_require__("fdbc");
+var forEach = __webpack_require__("17c2");
+var createNonEnumerableProperty = __webpack_require__("9112");
+
+for (var COLLECTION_NAME in DOMIterables) {
+  var Collection = global[COLLECTION_NAME];
+  var CollectionPrototype = Collection && Collection.prototype;
+  // some Chrome versions have non-configurable methods on DOMTokenList
+  if (CollectionPrototype && CollectionPrototype.forEach !== forEach) try {
+    createNonEnumerableProperty(CollectionPrototype, 'forEach', forEach);
+  } catch (error) {
+    CollectionPrototype.forEach = forEach;
+  }
+}
+
+
+/***/ }),
+
+/***/ "170b":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var toLength = __webpack_require__("50c4");
+var toAbsoluteIndex = __webpack_require__("23cb");
+var speciesConstructor = __webpack_require__("4840");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.subarray` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.subarray
+exportTypedArrayMethod('subarray', function subarray(begin, end) {
+  var O = aTypedArray(this);
+  var length = O.length;
+  var beginIndex = toAbsoluteIndex(begin, length);
+  return new (speciesConstructor(O, O.constructor))(
+    O.buffer,
+    O.byteOffset + beginIndex * O.BYTES_PER_ELEMENT,
+    toLength((end === undefined ? length : toAbsoluteIndex(end, length)) - beginIndex)
+  );
+});
+
+
+/***/ }),
+
 /***/ "175e":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -554,6 +642,27 @@ function unique(list, compare, sorted) {
 }
 
 module.exports = unique
+
+
+/***/ }),
+
+/***/ "17c2":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $forEach = __webpack_require__("b727").forEach;
+var arrayMethodIsStrict = __webpack_require__("a640");
+var arrayMethodUsesToLength = __webpack_require__("ae40");
+
+var STRICT_METHOD = arrayMethodIsStrict('forEach');
+var USES_TO_LENGTH = arrayMethodUsesToLength('forEach');
+
+// `Array.prototype.forEach` method implementation
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+module.exports = (!STRICT_METHOD || !USES_TO_LENGTH) ? function forEach(callbackfn /* , thisArg */) {
+  return $forEach(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+} : [].forEach;
 
 
 /***/ }),
@@ -1548,6 +1657,26 @@ module.exports = iota
 
 /***/ }),
 
+/***/ "219c":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+var $sort = [].sort;
+
+// `%TypedArray%.prototype.sort` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.sort
+exportTypedArrayMethod('sort', function sort(comparefn) {
+  return $sort.call(aTypedArray(this), comparefn);
+});
+
+
+/***/ }),
+
 /***/ "2266":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -1835,6 +1964,26 @@ var hiddenKeys = enumBugKeys.concat('length', 'prototype');
 exports.f = Object.getOwnPropertyNames || function getOwnPropertyNames(O) {
   return internalObjectKeys(O, hiddenKeys);
 };
+
+
+/***/ }),
+
+/***/ "25a1":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $reduceRight = __webpack_require__("d58f").right;
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.reduceRicht` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reduceright
+exportTypedArrayMethod('reduceRight', function reduceRight(callbackfn /* , initialValue */) {
+  return $reduceRight(aTypedArray(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+});
 
 
 /***/ }),
@@ -2175,6 +2324,40 @@ function createShader(
 }
 
 module.exports = createShader
+
+
+/***/ }),
+
+/***/ "2954":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var speciesConstructor = __webpack_require__("4840");
+var fails = __webpack_require__("d039");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var aTypedArrayConstructor = ArrayBufferViewCore.aTypedArrayConstructor;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+var $slice = [].slice;
+
+var FORCED = fails(function () {
+  // eslint-disable-next-line no-undef
+  new Int8Array(1).slice();
+});
+
+// `%TypedArray%.prototype.slice` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
+exportTypedArrayMethod('slice', function slice(start, end) {
+  var list = $slice.call(aTypedArray(this), start, end);
+  var C = speciesConstructor(this, this.constructor);
+  var index = 0;
+  var length = list.length;
+  var result = new (aTypedArrayConstructor(C))(length);
+  while (length > index) result[index] = list[index++];
+  return result;
+}, FORCED);
 
 
 /***/ }),
@@ -3335,6 +3518,27 @@ module.exports = version && +version;
 
 /***/ }),
 
+/***/ "3280":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $lastIndexOf = __webpack_require__("e58c");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.lastIndexOf` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.lastindexof
+// eslint-disable-next-line no-unused-vars
+exportTypedArrayMethod('lastIndexOf', function lastIndexOf(searchElement /* , fromIndex */) {
+  return $lastIndexOf.apply(aTypedArray(this), arguments);
+});
+
+
+/***/ }),
+
 /***/ "3410":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -3409,6 +3613,26 @@ module.exports = DESCRIPTORS ? Object.defineProperties : function defineProperti
 
 /***/ }),
 
+/***/ "3a7b":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $findIndex = __webpack_require__("b727").findIndex;
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.findIndex` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.findindex
+exportTypedArrayMethod('findIndex', function findIndex(predicate /* , thisArg */) {
+  return $findIndex(aTypedArray(this), predicate, arguments.length > 1 ? arguments[1] : undefined);
+});
+
+
+/***/ }),
+
 /***/ "3bbe":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -3419,6 +3643,41 @@ module.exports = function (it) {
     throw TypeError("Can't set " + String(it) + ' as a prototype');
   } return it;
 };
+
+
+/***/ }),
+
+/***/ "3c5d":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var toLength = __webpack_require__("50c4");
+var toOffset = __webpack_require__("182d");
+var toObject = __webpack_require__("7b0b");
+var fails = __webpack_require__("d039");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+var FORCED = fails(function () {
+  // eslint-disable-next-line no-undef
+  new Int8Array(1).set({});
+});
+
+// `%TypedArray%.prototype.set` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.set
+exportTypedArrayMethod('set', function set(arrayLike /* , offset */) {
+  aTypedArray(this);
+  var offset = toOffset(arguments.length > 1 ? arguments[1] : undefined, 1);
+  var length = this.length;
+  var src = toObject(arrayLike);
+  var len = toLength(src.length);
+  var index = 0;
+  if (len + offset > length) throw RangeError('Wrong length');
+  while (index < len) this[offset + index] = src[index++];
+}, FORCED);
 
 
 /***/ }),
@@ -3464,6 +3723,30 @@ defineIterator(String, 'String', function (iterated) {
 /***/ (function(module, exports) {
 
 module.exports = {};
+
+
+/***/ }),
+
+/***/ "3fcc":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $map = __webpack_require__("b727").map;
+var speciesConstructor = __webpack_require__("4840");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var aTypedArrayConstructor = ArrayBufferViewCore.aTypedArrayConstructor;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.map` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.map
+exportTypedArrayMethod('map', function map(mapfn /* , thisArg */) {
+  return $map(aTypedArray(this), mapfn, arguments.length > 1 ? arguments[1] : undefined, function (O, length) {
+    return new (aTypedArrayConstructor(speciesConstructor(O, O.constructor)))(length);
+  });
+});
 
 
 /***/ }),
@@ -3581,6 +3864,23 @@ function compileCwise(user_args) {
 }
 
 module.exports = compileCwise
+
+
+/***/ }),
+
+/***/ "4160":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__("23e7");
+var forEach = __webpack_require__("17c2");
+
+// `Array.prototype.forEach` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.foreach
+$({ target: 'Array', proto: true, forced: [].forEach != forEach }, {
+  forEach: forEach
+});
 
 
 /***/ }),
@@ -4366,6 +4666,51 @@ module.exports = getBuiltIn('Reflect', 'ownKeys') || function ownKeys(it) {
 
 /***/ }),
 
+/***/ "5899":
+/***/ (function(module, exports) {
+
+// a string of all valid unicode whitespaces
+// eslint-disable-next-line max-len
+module.exports = '\u0009\u000A\u000B\u000C\u000D\u0020\u00A0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000\u2028\u2029\uFEFF';
+
+
+/***/ }),
+
+/***/ "58a8":
+/***/ (function(module, exports, __webpack_require__) {
+
+var requireObjectCoercible = __webpack_require__("1d80");
+var whitespaces = __webpack_require__("5899");
+
+var whitespace = '[' + whitespaces + ']';
+var ltrim = RegExp('^' + whitespace + whitespace + '*');
+var rtrim = RegExp(whitespace + whitespace + '*$');
+
+// `String.prototype.{ trim, trimStart, trimEnd, trimLeft, trimRight }` methods implementation
+var createMethod = function (TYPE) {
+  return function ($this) {
+    var string = String(requireObjectCoercible($this));
+    if (TYPE & 1) string = string.replace(ltrim, '');
+    if (TYPE & 2) string = string.replace(rtrim, '');
+    return string;
+  };
+};
+
+module.exports = {
+  // `String.prototype.{ trimLeft, trimStart }` methods
+  // https://tc39.github.io/ecma262/#sec-string.prototype.trimstart
+  start: createMethod(1),
+  // `String.prototype.{ trimRight, trimEnd }` methods
+  // https://tc39.github.io/ecma262/#sec-string.prototype.trimend
+  end: createMethod(2),
+  // `String.prototype.trim` method
+  // https://tc39.github.io/ecma262/#sec-string.prototype.trim
+  trim: createMethod(3)
+};
+
+
+/***/ }),
+
 /***/ "5c6c":
 /***/ (function(module, exports) {
 
@@ -4534,6 +4879,27 @@ module.exports = [
   , 'texture2DProjGradEXT'
   , 'textureCubeGradEXT'
 ]
+
+
+/***/ }),
+
+/***/ "5f96":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+var $join = [].join;
+
+// `%TypedArray%.prototype.join` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.join
+// eslint-disable-next-line no-unused-vars
+exportTypedArrayMethod('join', function join(separator) {
+  return $join.apply(aTypedArray(this), arguments);
+});
 
 
 /***/ }),
@@ -4710,6 +5076,52 @@ module.exports = function (input) {
   }
   return encoded.join('.');
 };
+
+
+/***/ }),
+
+/***/ "60bd":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var global = __webpack_require__("da84");
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var ArrayIterators = __webpack_require__("e260");
+var wellKnownSymbol = __webpack_require__("b622");
+
+var ITERATOR = wellKnownSymbol('iterator');
+var Uint8Array = global.Uint8Array;
+var arrayValues = ArrayIterators.values;
+var arrayKeys = ArrayIterators.keys;
+var arrayEntries = ArrayIterators.entries;
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+var nativeTypedArrayIterator = Uint8Array && Uint8Array.prototype[ITERATOR];
+
+var CORRECT_ITER_NAME = !!nativeTypedArrayIterator
+  && (nativeTypedArrayIterator.name == 'values' || nativeTypedArrayIterator.name == undefined);
+
+var typedArrayValues = function values() {
+  return arrayValues.call(aTypedArray(this));
+};
+
+// `%TypedArray%.prototype.entries` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.entries
+exportTypedArrayMethod('entries', function entries() {
+  return arrayEntries.call(aTypedArray(this));
+});
+// `%TypedArray%.prototype.keys` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.keys
+exportTypedArrayMethod('keys', function keys() {
+  return arrayKeys.call(aTypedArray(this));
+});
+// `%TypedArray%.prototype.values` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.values
+exportTypedArrayMethod('values', typedArrayValues, !CORRECT_ITER_NAME);
+// `%TypedArray%.prototype[@@iterator]` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype-@@iterator
+exportTypedArrayMethod(ITERATOR, typedArrayValues, !CORRECT_ITER_NAME);
 
 
 /***/ }),
@@ -5477,6 +5889,26 @@ exports.equals = compile({
 
 /***/ }),
 
+/***/ "649e":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $some = __webpack_require__("b727").some;
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.some` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.some
+exportTypedArrayMethod('some', function some(callbackfn /* , thisArg */) {
+  return $some(aTypedArray(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+});
+
+
+/***/ }),
+
 /***/ "6547":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -5747,6 +6179,56 @@ module.exports = function ($this, dummy, Wrapper) {
   ) setPrototypeOf($this, NewTargetPrototype);
   return $this;
 };
+
+
+/***/ }),
+
+/***/ "72f7":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var exportTypedArrayMethod = __webpack_require__("ebb5").exportTypedArrayMethod;
+var fails = __webpack_require__("d039");
+var global = __webpack_require__("da84");
+
+var Uint8Array = global.Uint8Array;
+var Uint8ArrayPrototype = Uint8Array && Uint8Array.prototype || {};
+var arrayToString = [].toString;
+var arrayJoin = [].join;
+
+if (fails(function () { arrayToString.call({}); })) {
+  arrayToString = function toString() {
+    return arrayJoin.call(this);
+  };
+}
+
+var IS_NOT_ARRAY_METHOD = Uint8ArrayPrototype.toString != arrayToString;
+
+// `%TypedArray%.prototype.toString` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.tostring
+exportTypedArrayMethod('toString', arrayToString, IS_NOT_ARRAY_METHOD);
+
+
+/***/ }),
+
+/***/ "735e":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $fill = __webpack_require__("81d5");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.fill` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.fill
+// eslint-disable-next-line no-unused-vars
+exportTypedArrayMethod('fill', function fill(value /* , start, end */) {
+  return $fill.apply(aTypedArray(this), arguments);
+});
 
 
 /***/ }),
@@ -6226,6 +6708,38 @@ module.exports = Object.create || function create(O, Properties) {
 
 /***/ }),
 
+/***/ "7db0":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var $ = __webpack_require__("23e7");
+var $find = __webpack_require__("b727").find;
+var addToUnscopables = __webpack_require__("44d2");
+var arrayMethodUsesToLength = __webpack_require__("ae40");
+
+var FIND = 'find';
+var SKIPS_HOLES = true;
+
+var USES_TO_LENGTH = arrayMethodUsesToLength(FIND);
+
+// Shouldn't skip holes
+if (FIND in []) Array(1)[FIND](function () { SKIPS_HOLES = false; });
+
+// `Array.prototype.find` method
+// https://tc39.github.io/ecma262/#sec-array.prototype.find
+$({ target: 'Array', proto: true, forced: SKIPS_HOLES || !USES_TO_LENGTH }, {
+  find: function find(callbackfn /* , that = undefined */) {
+    return $find(this, callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  }
+});
+
+// https://tc39.github.io/ecma262/#sec-array.prototype-@@unscopables
+addToUnscopables(FIND);
+
+
+/***/ }),
+
 /***/ "7dd0":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -6643,6 +7157,26 @@ module.exports = function (it) {
     throw TypeError(String(it) + ' is not an object');
   } return it;
 };
+
+
+/***/ }),
+
+/***/ "82f8":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $includes = __webpack_require__("4d64").includes;
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.includes` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.includes
+exportTypedArrayMethod('includes', function includes(searchElement /* , fromIndex */) {
+  return $includes(aTypedArray(this), searchElement, arguments.length > 1 ? arguments[1] : undefined);
+});
 
 
 /***/ }),
@@ -7438,6 +7972,742 @@ module.exports = isForced;
 
 /***/ }),
 
+/***/ "96cf":
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * Copyright (c) 2014-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+var runtime = (function (exports) {
+  "use strict";
+
+  var Op = Object.prototype;
+  var hasOwn = Op.hasOwnProperty;
+  var undefined; // More compressible than void 0.
+  var $Symbol = typeof Symbol === "function" ? Symbol : {};
+  var iteratorSymbol = $Symbol.iterator || "@@iterator";
+  var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
+  var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
+
+  function wrap(innerFn, outerFn, self, tryLocsList) {
+    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
+    var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
+    var generator = Object.create(protoGenerator.prototype);
+    var context = new Context(tryLocsList || []);
+
+    // The ._invoke method unifies the implementations of the .next,
+    // .throw, and .return methods.
+    generator._invoke = makeInvokeMethod(innerFn, self, context);
+
+    return generator;
+  }
+  exports.wrap = wrap;
+
+  // Try/catch helper to minimize deoptimizations. Returns a completion
+  // record like context.tryEntries[i].completion. This interface could
+  // have been (and was previously) designed to take a closure to be
+  // invoked without arguments, but in all the cases we care about we
+  // already have an existing method we want to call, so there's no need
+  // to create a new function object. We can even get away with assuming
+  // the method takes exactly one argument, since that happens to be true
+  // in every case, so we don't have to touch the arguments object. The
+  // only additional allocation required is the completion record, which
+  // has a stable shape and so hopefully should be cheap to allocate.
+  function tryCatch(fn, obj, arg) {
+    try {
+      return { type: "normal", arg: fn.call(obj, arg) };
+    } catch (err) {
+      return { type: "throw", arg: err };
+    }
+  }
+
+  var GenStateSuspendedStart = "suspendedStart";
+  var GenStateSuspendedYield = "suspendedYield";
+  var GenStateExecuting = "executing";
+  var GenStateCompleted = "completed";
+
+  // Returning this object from the innerFn has the same effect as
+  // breaking out of the dispatch switch statement.
+  var ContinueSentinel = {};
+
+  // Dummy constructor functions that we use as the .constructor and
+  // .constructor.prototype properties for functions that return Generator
+  // objects. For full spec compliance, you may wish to configure your
+  // minifier not to mangle the names of these two functions.
+  function Generator() {}
+  function GeneratorFunction() {}
+  function GeneratorFunctionPrototype() {}
+
+  // This is a polyfill for %IteratorPrototype% for environments that
+  // don't natively support it.
+  var IteratorPrototype = {};
+  IteratorPrototype[iteratorSymbol] = function () {
+    return this;
+  };
+
+  var getProto = Object.getPrototypeOf;
+  var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
+  if (NativeIteratorPrototype &&
+      NativeIteratorPrototype !== Op &&
+      hasOwn.call(NativeIteratorPrototype, iteratorSymbol)) {
+    // This environment has a native %IteratorPrototype%; use it instead
+    // of the polyfill.
+    IteratorPrototype = NativeIteratorPrototype;
+  }
+
+  var Gp = GeneratorFunctionPrototype.prototype =
+    Generator.prototype = Object.create(IteratorPrototype);
+  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
+  GeneratorFunctionPrototype.constructor = GeneratorFunction;
+  GeneratorFunctionPrototype[toStringTagSymbol] =
+    GeneratorFunction.displayName = "GeneratorFunction";
+
+  // Helper for defining the .next, .throw, and .return methods of the
+  // Iterator interface in terms of a single ._invoke method.
+  function defineIteratorMethods(prototype) {
+    ["next", "throw", "return"].forEach(function(method) {
+      prototype[method] = function(arg) {
+        return this._invoke(method, arg);
+      };
+    });
+  }
+
+  exports.isGeneratorFunction = function(genFun) {
+    var ctor = typeof genFun === "function" && genFun.constructor;
+    return ctor
+      ? ctor === GeneratorFunction ||
+        // For the native GeneratorFunction constructor, the best we can
+        // do is to check its .name property.
+        (ctor.displayName || ctor.name) === "GeneratorFunction"
+      : false;
+  };
+
+  exports.mark = function(genFun) {
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
+    } else {
+      genFun.__proto__ = GeneratorFunctionPrototype;
+      if (!(toStringTagSymbol in genFun)) {
+        genFun[toStringTagSymbol] = "GeneratorFunction";
+      }
+    }
+    genFun.prototype = Object.create(Gp);
+    return genFun;
+  };
+
+  // Within the body of any async function, `await x` is transformed to
+  // `yield regeneratorRuntime.awrap(x)`, so that the runtime can test
+  // `hasOwn.call(value, "__await")` to determine if the yielded value is
+  // meant to be awaited.
+  exports.awrap = function(arg) {
+    return { __await: arg };
+  };
+
+  function AsyncIterator(generator, PromiseImpl) {
+    function invoke(method, arg, resolve, reject) {
+      var record = tryCatch(generator[method], generator, arg);
+      if (record.type === "throw") {
+        reject(record.arg);
+      } else {
+        var result = record.arg;
+        var value = result.value;
+        if (value &&
+            typeof value === "object" &&
+            hasOwn.call(value, "__await")) {
+          return PromiseImpl.resolve(value.__await).then(function(value) {
+            invoke("next", value, resolve, reject);
+          }, function(err) {
+            invoke("throw", err, resolve, reject);
+          });
+        }
+
+        return PromiseImpl.resolve(value).then(function(unwrapped) {
+          // When a yielded Promise is resolved, its final value becomes
+          // the .value of the Promise<{value,done}> result for the
+          // current iteration.
+          result.value = unwrapped;
+          resolve(result);
+        }, function(error) {
+          // If a rejected Promise was yielded, throw the rejection back
+          // into the async generator function so it can be handled there.
+          return invoke("throw", error, resolve, reject);
+        });
+      }
+    }
+
+    var previousPromise;
+
+    function enqueue(method, arg) {
+      function callInvokeWithMethodAndArg() {
+        return new PromiseImpl(function(resolve, reject) {
+          invoke(method, arg, resolve, reject);
+        });
+      }
+
+      return previousPromise =
+        // If enqueue has been called before, then we want to wait until
+        // all previous Promises have been resolved before calling invoke,
+        // so that results are always delivered in the correct order. If
+        // enqueue has not been called before, then it is important to
+        // call invoke immediately, without waiting on a callback to fire,
+        // so that the async generator function has the opportunity to do
+        // any necessary setup in a predictable way. This predictability
+        // is why the Promise constructor synchronously invokes its
+        // executor callback, and why async functions synchronously
+        // execute code before the first await. Since we implement simple
+        // async functions in terms of async generators, it is especially
+        // important to get this right, even though it requires care.
+        previousPromise ? previousPromise.then(
+          callInvokeWithMethodAndArg,
+          // Avoid propagating failures to Promises returned by later
+          // invocations of the iterator.
+          callInvokeWithMethodAndArg
+        ) : callInvokeWithMethodAndArg();
+    }
+
+    // Define the unified helper method that is used to implement .next,
+    // .throw, and .return (see defineIteratorMethods).
+    this._invoke = enqueue;
+  }
+
+  defineIteratorMethods(AsyncIterator.prototype);
+  AsyncIterator.prototype[asyncIteratorSymbol] = function () {
+    return this;
+  };
+  exports.AsyncIterator = AsyncIterator;
+
+  // Note that simple async functions are implemented on top of
+  // AsyncIterator objects; they just return a Promise for the value of
+  // the final result produced by the iterator.
+  exports.async = function(innerFn, outerFn, self, tryLocsList, PromiseImpl) {
+    if (PromiseImpl === void 0) PromiseImpl = Promise;
+
+    var iter = new AsyncIterator(
+      wrap(innerFn, outerFn, self, tryLocsList),
+      PromiseImpl
+    );
+
+    return exports.isGeneratorFunction(outerFn)
+      ? iter // If outerFn is a generator, return the full iterator.
+      : iter.next().then(function(result) {
+          return result.done ? result.value : iter.next();
+        });
+  };
+
+  function makeInvokeMethod(innerFn, self, context) {
+    var state = GenStateSuspendedStart;
+
+    return function invoke(method, arg) {
+      if (state === GenStateExecuting) {
+        throw new Error("Generator is already running");
+      }
+
+      if (state === GenStateCompleted) {
+        if (method === "throw") {
+          throw arg;
+        }
+
+        // Be forgiving, per 25.3.3.3.3 of the spec:
+        // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
+        return doneResult();
+      }
+
+      context.method = method;
+      context.arg = arg;
+
+      while (true) {
+        var delegate = context.delegate;
+        if (delegate) {
+          var delegateResult = maybeInvokeDelegate(delegate, context);
+          if (delegateResult) {
+            if (delegateResult === ContinueSentinel) continue;
+            return delegateResult;
+          }
+        }
+
+        if (context.method === "next") {
+          // Setting context._sent for legacy support of Babel's
+          // function.sent implementation.
+          context.sent = context._sent = context.arg;
+
+        } else if (context.method === "throw") {
+          if (state === GenStateSuspendedStart) {
+            state = GenStateCompleted;
+            throw context.arg;
+          }
+
+          context.dispatchException(context.arg);
+
+        } else if (context.method === "return") {
+          context.abrupt("return", context.arg);
+        }
+
+        state = GenStateExecuting;
+
+        var record = tryCatch(innerFn, self, context);
+        if (record.type === "normal") {
+          // If an exception is thrown from innerFn, we leave state ===
+          // GenStateExecuting and loop back for another invocation.
+          state = context.done
+            ? GenStateCompleted
+            : GenStateSuspendedYield;
+
+          if (record.arg === ContinueSentinel) {
+            continue;
+          }
+
+          return {
+            value: record.arg,
+            done: context.done
+          };
+
+        } else if (record.type === "throw") {
+          state = GenStateCompleted;
+          // Dispatch the exception by looping back around to the
+          // context.dispatchException(context.arg) call above.
+          context.method = "throw";
+          context.arg = record.arg;
+        }
+      }
+    };
+  }
+
+  // Call delegate.iterator[context.method](context.arg) and handle the
+  // result, either by returning a { value, done } result from the
+  // delegate iterator, or by modifying context.method and context.arg,
+  // setting context.delegate to null, and returning the ContinueSentinel.
+  function maybeInvokeDelegate(delegate, context) {
+    var method = delegate.iterator[context.method];
+    if (method === undefined) {
+      // A .throw or .return when the delegate iterator has no .throw
+      // method always terminates the yield* loop.
+      context.delegate = null;
+
+      if (context.method === "throw") {
+        // Note: ["return"] must be used for ES3 parsing compatibility.
+        if (delegate.iterator["return"]) {
+          // If the delegate iterator has a return method, give it a
+          // chance to clean up.
+          context.method = "return";
+          context.arg = undefined;
+          maybeInvokeDelegate(delegate, context);
+
+          if (context.method === "throw") {
+            // If maybeInvokeDelegate(context) changed context.method from
+            // "return" to "throw", let that override the TypeError below.
+            return ContinueSentinel;
+          }
+        }
+
+        context.method = "throw";
+        context.arg = new TypeError(
+          "The iterator does not provide a 'throw' method");
+      }
+
+      return ContinueSentinel;
+    }
+
+    var record = tryCatch(method, delegate.iterator, context.arg);
+
+    if (record.type === "throw") {
+      context.method = "throw";
+      context.arg = record.arg;
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    var info = record.arg;
+
+    if (! info) {
+      context.method = "throw";
+      context.arg = new TypeError("iterator result is not an object");
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    if (info.done) {
+      // Assign the result of the finished delegate to the temporary
+      // variable specified by delegate.resultName (see delegateYield).
+      context[delegate.resultName] = info.value;
+
+      // Resume execution at the desired location (see delegateYield).
+      context.next = delegate.nextLoc;
+
+      // If context.method was "throw" but the delegate handled the
+      // exception, let the outer generator proceed normally. If
+      // context.method was "next", forget context.arg since it has been
+      // "consumed" by the delegate iterator. If context.method was
+      // "return", allow the original .return call to continue in the
+      // outer generator.
+      if (context.method !== "return") {
+        context.method = "next";
+        context.arg = undefined;
+      }
+
+    } else {
+      // Re-yield the result returned by the delegate method.
+      return info;
+    }
+
+    // The delegate iterator is finished, so forget it and continue with
+    // the outer generator.
+    context.delegate = null;
+    return ContinueSentinel;
+  }
+
+  // Define Generator.prototype.{next,throw,return} in terms of the
+  // unified ._invoke helper method.
+  defineIteratorMethods(Gp);
+
+  Gp[toStringTagSymbol] = "Generator";
+
+  // A Generator should always return itself as the iterator object when the
+  // @@iterator function is called on it. Some browsers' implementations of the
+  // iterator prototype chain incorrectly implement this, causing the Generator
+  // object to not be returned from this call. This ensures that doesn't happen.
+  // See https://github.com/facebook/regenerator/issues/274 for more details.
+  Gp[iteratorSymbol] = function() {
+    return this;
+  };
+
+  Gp.toString = function() {
+    return "[object Generator]";
+  };
+
+  function pushTryEntry(locs) {
+    var entry = { tryLoc: locs[0] };
+
+    if (1 in locs) {
+      entry.catchLoc = locs[1];
+    }
+
+    if (2 in locs) {
+      entry.finallyLoc = locs[2];
+      entry.afterLoc = locs[3];
+    }
+
+    this.tryEntries.push(entry);
+  }
+
+  function resetTryEntry(entry) {
+    var record = entry.completion || {};
+    record.type = "normal";
+    delete record.arg;
+    entry.completion = record;
+  }
+
+  function Context(tryLocsList) {
+    // The root entry object (effectively a try statement without a catch
+    // or a finally block) gives us a place to store values thrown from
+    // locations where there is no enclosing try statement.
+    this.tryEntries = [{ tryLoc: "root" }];
+    tryLocsList.forEach(pushTryEntry, this);
+    this.reset(true);
+  }
+
+  exports.keys = function(object) {
+    var keys = [];
+    for (var key in object) {
+      keys.push(key);
+    }
+    keys.reverse();
+
+    // Rather than returning an object with a next method, we keep
+    // things simple and return the next function itself.
+    return function next() {
+      while (keys.length) {
+        var key = keys.pop();
+        if (key in object) {
+          next.value = key;
+          next.done = false;
+          return next;
+        }
+      }
+
+      // To avoid creating an additional object, we just hang the .value
+      // and .done properties off the next function object itself. This
+      // also ensures that the minifier will not anonymize the function.
+      next.done = true;
+      return next;
+    };
+  };
+
+  function values(iterable) {
+    if (iterable) {
+      var iteratorMethod = iterable[iteratorSymbol];
+      if (iteratorMethod) {
+        return iteratorMethod.call(iterable);
+      }
+
+      if (typeof iterable.next === "function") {
+        return iterable;
+      }
+
+      if (!isNaN(iterable.length)) {
+        var i = -1, next = function next() {
+          while (++i < iterable.length) {
+            if (hasOwn.call(iterable, i)) {
+              next.value = iterable[i];
+              next.done = false;
+              return next;
+            }
+          }
+
+          next.value = undefined;
+          next.done = true;
+
+          return next;
+        };
+
+        return next.next = next;
+      }
+    }
+
+    // Return an iterator with no values.
+    return { next: doneResult };
+  }
+  exports.values = values;
+
+  function doneResult() {
+    return { value: undefined, done: true };
+  }
+
+  Context.prototype = {
+    constructor: Context,
+
+    reset: function(skipTempReset) {
+      this.prev = 0;
+      this.next = 0;
+      // Resetting context._sent for legacy support of Babel's
+      // function.sent implementation.
+      this.sent = this._sent = undefined;
+      this.done = false;
+      this.delegate = null;
+
+      this.method = "next";
+      this.arg = undefined;
+
+      this.tryEntries.forEach(resetTryEntry);
+
+      if (!skipTempReset) {
+        for (var name in this) {
+          // Not sure about the optimal order of these conditions:
+          if (name.charAt(0) === "t" &&
+              hasOwn.call(this, name) &&
+              !isNaN(+name.slice(1))) {
+            this[name] = undefined;
+          }
+        }
+      }
+    },
+
+    stop: function() {
+      this.done = true;
+
+      var rootEntry = this.tryEntries[0];
+      var rootRecord = rootEntry.completion;
+      if (rootRecord.type === "throw") {
+        throw rootRecord.arg;
+      }
+
+      return this.rval;
+    },
+
+    dispatchException: function(exception) {
+      if (this.done) {
+        throw exception;
+      }
+
+      var context = this;
+      function handle(loc, caught) {
+        record.type = "throw";
+        record.arg = exception;
+        context.next = loc;
+
+        if (caught) {
+          // If the dispatched exception was caught by a catch block,
+          // then let that catch block handle the exception normally.
+          context.method = "next";
+          context.arg = undefined;
+        }
+
+        return !! caught;
+      }
+
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        var record = entry.completion;
+
+        if (entry.tryLoc === "root") {
+          // Exception thrown outside of any try block that could handle
+          // it, so set the completion value of the entire function to
+          // throw the exception.
+          return handle("end");
+        }
+
+        if (entry.tryLoc <= this.prev) {
+          var hasCatch = hasOwn.call(entry, "catchLoc");
+          var hasFinally = hasOwn.call(entry, "finallyLoc");
+
+          if (hasCatch && hasFinally) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            } else if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else if (hasCatch) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            }
+
+          } else if (hasFinally) {
+            if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else {
+            throw new Error("try statement without catch or finally");
+          }
+        }
+      }
+    },
+
+    abrupt: function(type, arg) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc <= this.prev &&
+            hasOwn.call(entry, "finallyLoc") &&
+            this.prev < entry.finallyLoc) {
+          var finallyEntry = entry;
+          break;
+        }
+      }
+
+      if (finallyEntry &&
+          (type === "break" ||
+           type === "continue") &&
+          finallyEntry.tryLoc <= arg &&
+          arg <= finallyEntry.finallyLoc) {
+        // Ignore the finally entry if control is not jumping to a
+        // location outside the try/catch block.
+        finallyEntry = null;
+      }
+
+      var record = finallyEntry ? finallyEntry.completion : {};
+      record.type = type;
+      record.arg = arg;
+
+      if (finallyEntry) {
+        this.method = "next";
+        this.next = finallyEntry.finallyLoc;
+        return ContinueSentinel;
+      }
+
+      return this.complete(record);
+    },
+
+    complete: function(record, afterLoc) {
+      if (record.type === "throw") {
+        throw record.arg;
+      }
+
+      if (record.type === "break" ||
+          record.type === "continue") {
+        this.next = record.arg;
+      } else if (record.type === "return") {
+        this.rval = this.arg = record.arg;
+        this.method = "return";
+        this.next = "end";
+      } else if (record.type === "normal" && afterLoc) {
+        this.next = afterLoc;
+      }
+
+      return ContinueSentinel;
+    },
+
+    finish: function(finallyLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.finallyLoc === finallyLoc) {
+          this.complete(entry.completion, entry.afterLoc);
+          resetTryEntry(entry);
+          return ContinueSentinel;
+        }
+      }
+    },
+
+    "catch": function(tryLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc === tryLoc) {
+          var record = entry.completion;
+          if (record.type === "throw") {
+            var thrown = record.arg;
+            resetTryEntry(entry);
+          }
+          return thrown;
+        }
+      }
+
+      // The context.catch method must only be called with a location
+      // argument that corresponds to a known catch block.
+      throw new Error("illegal catch attempt");
+    },
+
+    delegateYield: function(iterable, resultName, nextLoc) {
+      this.delegate = {
+        iterator: values(iterable),
+        resultName: resultName,
+        nextLoc: nextLoc
+      };
+
+      if (this.method === "next") {
+        // Deliberately forget the last sent value so that we don't
+        // accidentally pass it on to the delegate.
+        this.arg = undefined;
+      }
+
+      return ContinueSentinel;
+    }
+  };
+
+  // Regardless of whether this script is executing as a CommonJS module
+  // or not, return the runtime object so that we can declare the variable
+  // regeneratorRuntime in the outer scope, which allows this module to be
+  // injected easily by `bin/regenerator --include-runtime script.js`.
+  return exports;
+
+}(
+  // If this script is executing as a CommonJS module, use module.exports
+  // as the regeneratorRuntime namespace. Otherwise create a new empty
+  // object. Either way, the resulting object will be used to initialize
+  // the regeneratorRuntime variable at the top of this file.
+   true ? module.exports : undefined
+));
+
+try {
+  regeneratorRuntime = runtime;
+} catch (accidentalStrictMode) {
+  // This module should not be running in strict mode, so the above
+  // assignment should always work unless something is misconfigured. Just
+  // in case runtime.js accidentally runs in strict mode, we can escape
+  // strict mode using a global Function call. This could conceivably fail
+  // if a Content Security Policy forbids using Function, but in that case
+  // the proper solution is to fix the accidental strict mode problem. If
+  // you've misconfigured your bundler to force strict mode and applied a
+  // CSP to forbid Function, and you're not willing to fix either of those
+  // problems, please detail your unique predicament in a GitHub issue.
+  Function("r", "regeneratorRuntime = r")(runtime);
+}
+
+
+/***/ }),
+
 /***/ "9861":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -7805,6 +9075,26 @@ module.exports = function (it) {
     throw TypeError(String(it) + ' is not iterable');
   } return anObject(iteratorMethod.call(it));
 };
+
+
+/***/ }),
+
+/***/ "9a8c":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $copyWithin = __webpack_require__("145e");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.copyWithin` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.copywithin
+exportTypedArrayMethod('copyWithin', function copyWithin(target, start /* , end */) {
+  return $copyWithin.call(aTypedArray(this), target, start, arguments.length > 2 ? arguments[2] : undefined);
+});
 
 
 /***/ }),
@@ -8490,6 +9780,24 @@ $({ target: 'Array', stat: true, forced: INCORRECT_ITERATION }, {
 
 /***/ }),
 
+/***/ "a640":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var fails = __webpack_require__("d039");
+
+module.exports = function (METHOD_NAME, argument) {
+  var method = [][METHOD_NAME];
+  return !!method && fails(function () {
+    // eslint-disable-next-line no-useless-call,no-throw-literal
+    method.call(null, argument || function () { throw 1; }, 1);
+  });
+};
+
+
+/***/ }),
+
 /***/ "a691":
 /***/ (function(module, exports) {
 
@@ -8505,10 +9813,116 @@ module.exports = function (argument) {
 
 /***/ }),
 
+/***/ "a975":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $every = __webpack_require__("b727").every;
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.every` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.every
+exportTypedArrayMethod('every', function every(callbackfn /* , thisArg */) {
+  return $every(aTypedArray(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+});
+
+
+/***/ }),
+
 /***/ "a981":
 /***/ (function(module, exports) {
 
 module.exports = typeof ArrayBuffer !== 'undefined' && typeof DataView !== 'undefined';
+
+
+/***/ }),
+
+/***/ "a9e3":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var DESCRIPTORS = __webpack_require__("83ab");
+var global = __webpack_require__("da84");
+var isForced = __webpack_require__("94ca");
+var redefine = __webpack_require__("6eeb");
+var has = __webpack_require__("5135");
+var classof = __webpack_require__("c6b6");
+var inheritIfRequired = __webpack_require__("7156");
+var toPrimitive = __webpack_require__("c04e");
+var fails = __webpack_require__("d039");
+var create = __webpack_require__("7c73");
+var getOwnPropertyNames = __webpack_require__("241c").f;
+var getOwnPropertyDescriptor = __webpack_require__("06cf").f;
+var defineProperty = __webpack_require__("9bf2").f;
+var trim = __webpack_require__("58a8").trim;
+
+var NUMBER = 'Number';
+var NativeNumber = global[NUMBER];
+var NumberPrototype = NativeNumber.prototype;
+
+// Opera ~12 has broken Object#toString
+var BROKEN_CLASSOF = classof(create(NumberPrototype)) == NUMBER;
+
+// `ToNumber` abstract operation
+// https://tc39.github.io/ecma262/#sec-tonumber
+var toNumber = function (argument) {
+  var it = toPrimitive(argument, false);
+  var first, third, radix, maxCode, digits, length, index, code;
+  if (typeof it == 'string' && it.length > 2) {
+    it = trim(it);
+    first = it.charCodeAt(0);
+    if (first === 43 || first === 45) {
+      third = it.charCodeAt(2);
+      if (third === 88 || third === 120) return NaN; // Number('+0x1') should be NaN, old V8 fix
+    } else if (first === 48) {
+      switch (it.charCodeAt(1)) {
+        case 66: case 98: radix = 2; maxCode = 49; break; // fast equal of /^0b[01]+$/i
+        case 79: case 111: radix = 8; maxCode = 55; break; // fast equal of /^0o[0-7]+$/i
+        default: return +it;
+      }
+      digits = it.slice(2);
+      length = digits.length;
+      for (index = 0; index < length; index++) {
+        code = digits.charCodeAt(index);
+        // parseInt parses a string to a first unavailable symbol
+        // but ToNumber should return NaN if a string contains unavailable symbols
+        if (code < 48 || code > maxCode) return NaN;
+      } return parseInt(digits, radix);
+    }
+  } return +it;
+};
+
+// `Number` constructor
+// https://tc39.github.io/ecma262/#sec-number-constructor
+if (isForced(NUMBER, !NativeNumber(' 0o1') || !NativeNumber('0b1') || NativeNumber('+0x1'))) {
+  var NumberWrapper = function Number(value) {
+    var it = arguments.length < 1 ? 0 : value;
+    var dummy = this;
+    return dummy instanceof NumberWrapper
+      // check on 1..constructor(foo) case
+      && (BROKEN_CLASSOF ? fails(function () { NumberPrototype.valueOf.call(dummy); }) : classof(dummy) != NUMBER)
+        ? inheritIfRequired(new NativeNumber(toNumber(it)), dummy, NumberWrapper) : toNumber(it);
+  };
+  for (var keys = DESCRIPTORS ? getOwnPropertyNames(NativeNumber) : (
+    // ES3:
+    'MAX_VALUE,MIN_VALUE,NaN,NEGATIVE_INFINITY,POSITIVE_INFINITY,' +
+    // ES2015 (in case, if modules with ES2015 Number statics required before):
+    'EPSILON,isFinite,isInteger,isNaN,isSafeInteger,MAX_SAFE_INTEGER,' +
+    'MIN_SAFE_INTEGER,parseFloat,parseInt,isInteger'
+  ).split(','), j = 0, key; keys.length > j; j++) {
+    if (has(NativeNumber, key = keys[j]) && !has(NumberWrapper, key)) {
+      defineProperty(NumberWrapper, key, getOwnPropertyDescriptor(NativeNumber, key));
+    }
+  }
+  NumberWrapper.prototype = NumberPrototype;
+  NumberPrototype.constructor = NumberWrapper;
+  redefine(global, NUMBER, NumberWrapper);
+}
 
 
 /***/ }),
@@ -11330,6 +12744,27 @@ function isnan (val) {
 
 /***/ }),
 
+/***/ "b64b":
+/***/ (function(module, exports, __webpack_require__) {
+
+var $ = __webpack_require__("23e7");
+var toObject = __webpack_require__("7b0b");
+var nativeKeys = __webpack_require__("df75");
+var fails = __webpack_require__("d039");
+
+var FAILS_ON_PRIMITIVES = fails(function () { nativeKeys(1); });
+
+// `Object.keys` method
+// https://tc39.github.io/ecma262/#sec-object.keys
+$({ target: 'Object', stat: true, forced: FAILS_ON_PRIMITIVES }, {
+  keys: function keys(it) {
+    return nativeKeys(toObject(it));
+  }
+});
+
+
+/***/ }),
+
 /***/ "b727":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -11511,6 +12946,34 @@ module.exports = function (input, PREFERRED_STRING) {
 
 /***/ }),
 
+/***/ "c1ac":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $filter = __webpack_require__("b727").filter;
+var speciesConstructor = __webpack_require__("4840");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var aTypedArrayConstructor = ArrayBufferViewCore.aTypedArrayConstructor;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.filter` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.filter
+exportTypedArrayMethod('filter', function filter(callbackfn /* , thisArg */) {
+  var list = $filter(aTypedArray(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+  var C = speciesConstructor(this, this.constructor);
+  var index = 0;
+  var length = list.length;
+  var result = new (aTypedArrayConstructor(C))(length);
+  while (length > index) result[index] = list[index++];
+  return result;
+});
+
+
+/***/ }),
+
 /***/ "c430":
 /***/ (function(module, exports) {
 
@@ -11596,6 +13059,26 @@ module.exports = function (object, names) {
 
 /***/ }),
 
+/***/ "ca91":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $reduce = __webpack_require__("d58f").left;
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.reduce` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reduce
+exportTypedArrayMethod('reduce', function reduce(callbackfn /* , initialValue */) {
+  return $reduce(aTypedArray(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+});
+
+
+/***/ }),
+
 /***/ "cc12":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -11623,6 +13106,35 @@ var assign = __webpack_require__("60da");
 // https://tc39.github.io/ecma262/#sec-object.assign
 $({ target: 'Object', stat: true, forced: Object.assign !== assign }, {
   assign: assign
+});
+
+
+/***/ }),
+
+/***/ "cd26":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+var floor = Math.floor;
+
+// `%TypedArray%.prototype.reverse` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reverse
+exportTypedArrayMethod('reverse', function reverse() {
+  var that = this;
+  var length = aTypedArray(that).length;
+  var middle = floor(length / 2);
+  var index = 0;
+  var value;
+  while (index < middle) {
+    value = that[index];
+    that[index++] = that[--length];
+    that[length] = value;
+  } return that;
 });
 
 
@@ -12179,6 +13691,26 @@ module.exports = function (namespace, method) {
 
 /***/ }),
 
+/***/ "d139":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $find = __webpack_require__("b727").find;
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.find` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.find
+exportTypedArrayMethod('find', function find(predicate /* , thisArg */) {
+  return $find(aTypedArray(this), predicate, arguments.length > 1 ? arguments[1] : undefined);
+});
+
+
+/***/ }),
+
 /***/ "d1e7":
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -12453,6 +13985,73 @@ module.exports = function (it, TAG, STATIC) {
     defineProperty(it, TO_STRING_TAG, { configurable: true, value: TAG });
   }
 };
+
+
+/***/ }),
+
+/***/ "d58f":
+/***/ (function(module, exports, __webpack_require__) {
+
+var aFunction = __webpack_require__("1c0b");
+var toObject = __webpack_require__("7b0b");
+var IndexedObject = __webpack_require__("44ad");
+var toLength = __webpack_require__("50c4");
+
+// `Array.prototype.{ reduce, reduceRight }` methods implementation
+var createMethod = function (IS_RIGHT) {
+  return function (that, callbackfn, argumentsLength, memo) {
+    aFunction(callbackfn);
+    var O = toObject(that);
+    var self = IndexedObject(O);
+    var length = toLength(O.length);
+    var index = IS_RIGHT ? length - 1 : 0;
+    var i = IS_RIGHT ? -1 : 1;
+    if (argumentsLength < 2) while (true) {
+      if (index in self) {
+        memo = self[index];
+        index += i;
+        break;
+      }
+      index += i;
+      if (IS_RIGHT ? index < 0 : length <= index) {
+        throw TypeError('Reduce of empty array with no initial value');
+      }
+    }
+    for (;IS_RIGHT ? index >= 0 : length > index; index += i) if (index in self) {
+      memo = callbackfn(memo, self[index], index, O);
+    }
+    return memo;
+  };
+};
+
+module.exports = {
+  // `Array.prototype.reduce` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.reduce
+  left: createMethod(false),
+  // `Array.prototype.reduceRight` method
+  // https://tc39.github.io/ecma262/#sec-array.prototype.reduceright
+  right: createMethod(true)
+};
+
+
+/***/ }),
+
+/***/ "d5d6":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $forEach = __webpack_require__("b727").forEach;
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.forEach` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.foreach
+exportTypedArrayMethod('forEach', function forEach(callbackfn /* , thisArg */) {
+  $forEach(aTypedArray(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+});
 
 
 /***/ }),
@@ -12964,6 +14563,42 @@ exports.f = wellKnownSymbol;
 
 /***/ }),
 
+/***/ "e58c":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var toIndexedObject = __webpack_require__("fc6a");
+var toInteger = __webpack_require__("a691");
+var toLength = __webpack_require__("50c4");
+var arrayMethodIsStrict = __webpack_require__("a640");
+var arrayMethodUsesToLength = __webpack_require__("ae40");
+
+var min = Math.min;
+var nativeLastIndexOf = [].lastIndexOf;
+var NEGATIVE_ZERO = !!nativeLastIndexOf && 1 / [1].lastIndexOf(1, -0) < 0;
+var STRICT_METHOD = arrayMethodIsStrict('lastIndexOf');
+// For preventing possible almost infinite loop in non-standard implementations, test the forward version of the method
+var USES_TO_LENGTH = arrayMethodUsesToLength('indexOf', { ACCESSORS: true, 1: 0 });
+var FORCED = NEGATIVE_ZERO || !STRICT_METHOD || !USES_TO_LENGTH;
+
+// `Array.prototype.lastIndexOf` method implementation
+// https://tc39.github.io/ecma262/#sec-array.prototype.lastindexof
+module.exports = FORCED ? function lastIndexOf(searchElement /* , fromIndex = @[*-1] */) {
+  // convert -0 to +0
+  if (NEGATIVE_ZERO) return nativeLastIndexOf.apply(this, arguments) || 0;
+  var O = toIndexedObject(this);
+  var length = toLength(O.length);
+  var index = length - 1;
+  if (arguments.length > 1) index = min(index, toInteger(arguments[1]));
+  if (index < 0) index = length + index;
+  for (;index >= 0; index--) if (index in O && O[index] === searchElement) return index || 0;
+  return -1;
+} : nativeLastIndexOf;
+
+
+/***/ }),
+
 /***/ "e667":
 /***/ (function(module, exports) {
 
@@ -13396,6 +15031,26 @@ var classof = __webpack_require__("c6b6");
 module.exports = Array.isArray || function isArray(arg) {
   return classof(arg) == 'Array';
 };
+
+
+/***/ }),
+
+/***/ "e91f":
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+var ArrayBufferViewCore = __webpack_require__("ebb5");
+var $indexOf = __webpack_require__("4d64").indexOf;
+
+var aTypedArray = ArrayBufferViewCore.aTypedArray;
+var exportTypedArrayMethod = ArrayBufferViewCore.exportTypedArrayMethod;
+
+// `%TypedArray%.prototype.indexOf` method
+// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.indexof
+exportTypedArrayMethod('indexOf', function indexOf(searchElement /* , fromIndex */) {
+  return $indexOf(aTypedArray(this), searchElement, arguments.length > 1 ? arguments[1] : undefined);
+});
 
 
 /***/ }),
@@ -14994,11 +16649,80 @@ function isPromise(obj) {
     return obj instanceof Promise || (obj && typeof obj.then === 'function');
 }
 
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.number.constructor.js
+var es_number_constructor = __webpack_require__("a9e3");
+
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.float32-array.js
 var es_typed_array_float32_array = __webpack_require__("cfc3");
 
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.copy-within.js
+var es_typed_array_copy_within = __webpack_require__("9a8c");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.every.js
+var es_typed_array_every = __webpack_require__("a975");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.fill.js
+var es_typed_array_fill = __webpack_require__("735e");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.filter.js
+var es_typed_array_filter = __webpack_require__("c1ac");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.find.js
+var es_typed_array_find = __webpack_require__("d139");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.find-index.js
+var es_typed_array_find_index = __webpack_require__("3a7b");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.for-each.js
+var es_typed_array_for_each = __webpack_require__("d5d6");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.includes.js
+var es_typed_array_includes = __webpack_require__("82f8");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.index-of.js
+var es_typed_array_index_of = __webpack_require__("e91f");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.iterator.js
+var es_typed_array_iterator = __webpack_require__("60bd");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.join.js
+var es_typed_array_join = __webpack_require__("5f96");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.last-index-of.js
+var es_typed_array_last_index_of = __webpack_require__("3280");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.map.js
+var es_typed_array_map = __webpack_require__("3fcc");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.reduce.js
+var es_typed_array_reduce = __webpack_require__("ca91");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.reduce-right.js
+var es_typed_array_reduce_right = __webpack_require__("25a1");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.reverse.js
+var es_typed_array_reverse = __webpack_require__("cd26");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.set.js
+var es_typed_array_set = __webpack_require__("3c5d");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.slice.js
+var es_typed_array_slice = __webpack_require__("2954");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.some.js
+var es_typed_array_some = __webpack_require__("649e");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.sort.js
+var es_typed_array_sort = __webpack_require__("219c");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.subarray.js
+var es_typed_array_subarray = __webpack_require__("170b");
+
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.to-locale-string.js
 var es_typed_array_to_locale_string = __webpack_require__("b39a");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.typed-array.to-string.js
+var es_typed_array_to_string = __webpack_require__("72f7");
 
 // EXTERNAL MODULE: ./node_modules/gl-transition/lib/index.js
 var lib = __webpack_require__("b83d");
@@ -15010,85 +16734,132 @@ var lib_default = /*#__PURE__*/__webpack_require__.n(lib);
 
 
 
-let GLTransitionvue_type_script_lang_tsx_GlTransition = class GlTransition extends external_commonjs_vue_commonjs2_vue_root_Vue_default.a {
-  init() {
-    const {
-      glContext: gl,
-      from,
-      to,
-      width,
-      height,
-      transition
-    } = this;
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 4, 4, -1]), // see a-big-triangle
-    gl.STATIC_DRAW);
-    gl.viewport(0, 0, width, height);
-    from.minFilter = gl.LINEAR;
-    from.magFilter = gl.LINEAR;
-    to.minFilter = gl.LINEAR;
-    to.magFilter = gl.LINEAR;
-    this.Transition = lib_default()(gl, transition);
-    this.loop();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var GLTransitionvue_type_script_lang_tsx_GlTransition = /*#__PURE__*/function (_Vue) {
+  _inherits(GlTransition, _Vue);
+
+  var _super = _createSuper(GlTransition);
+
+  function GlTransition() {
+    _classCallCheck(this, GlTransition);
+
+    return _super.apply(this, arguments);
   }
 
-  onChangeProgressVal(val, oldVal) {
-    if (val != oldVal) {
-      if (val < 0) {
-        this.dispose();
-      } else if (val >= 100) {
-        this.dispose();
-      } else {
-        this.loop();
+  _createClass(GlTransition, [{
+    key: "init",
+    value: function init() {
+      var gl = this.glContext,
+          from = this.from,
+          to = this.to,
+          width = this.width,
+          height = this.height,
+          transition = this.transition;
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      var buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, -1, 4, 4, -1]), // see a-big-triangle
+      gl.STATIC_DRAW);
+      gl.viewport(0, 0, width, height);
+      from.minFilter = gl.LINEAR;
+      from.magFilter = gl.LINEAR;
+      to.minFilter = gl.LINEAR;
+      to.magFilter = gl.LINEAR;
+      this.Transition = lib_default()(gl, transition);
+      this.loop();
+    }
+  }, {
+    key: "onChangeProgressVal",
+    value: function onChangeProgressVal(val, oldVal) {
+      if (val != oldVal) {
+        if (val < 0) {
+          this.dispose();
+        } else if (val >= 100) {
+          this.dispose();
+        } else {
+          this.loop();
+        }
       }
     }
-  }
-
-  onChangeTransitionVal() {
-    this.init();
-  }
-
-  loop() {
-    const {
-      from,
-      to,
-      width,
-      height,
-      progressSync,
-      duration,
-      Transition
-    } = this;
-
-    try {
-      Transition.draw(progressSync / duration % 1, from, to, width, height, {
-        persp: 1.5,
-        unzoom: 0.6
-      });
-    } catch (error) {
+  }, {
+    key: "onChangeTransitionVal",
+    value: function onChangeTransitionVal() {
       this.init();
     }
-  }
+  }, {
+    key: "loop",
+    value: function loop() {
+      var from = this.from,
+          to = this.to,
+          width = this.width,
+          height = this.height,
+          progressSync = this.progressSync,
+          duration = this.duration,
+          Transition = this.Transition;
 
-  dispose() {
-    this.Transition.dispose();
-    this.cleanCanvas();
-  }
+      try {
+        Transition.draw(progressSync / duration % 1, from, to, width, height, {
+          persp: 1.5,
+          unzoom: 0.6
+        });
+      } catch (error) {
+        this.init();
+      }
+    }
+  }, {
+    key: "dispose",
+    value: function dispose() {
+      this.Transition.dispose();
+      this.cleanCanvas();
+    }
+  }, {
+    key: "cleanCanvas",
+    value: function cleanCanvas() {
+      this.glContext.clear(this.glContext.COLOR_BUFFER_BIT);
+    }
+  }, {
+    key: "created",
+    value: function created() {
+      this.init();
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      return;
+    }
+  }]);
 
-  cleanCanvas() {
-    this.glContext.clear(this.glContext.COLOR_BUFFER_BIT);
-  }
-
-  created() {
-    this.init();
-  }
-
-  render() {
-    return;
-  }
-
-};
+  return GlTransition;
+}(external_commonjs_vue_commonjs2_vue_root_Vue_default.a);
 
 __decorate([Prop()], GLTransitionvue_type_script_lang_tsx_GlTransition.prototype, "glContext", void 0);
 
@@ -15097,10 +16868,12 @@ __decorate([Prop()], GLTransitionvue_type_script_lang_tsx_GlTransition.prototype
 __decorate([Prop()], GLTransitionvue_type_script_lang_tsx_GlTransition.prototype, "to", void 0);
 
 __decorate([Prop({
-  default: () => ({
-    glsl: "",
-    defaultParams: {}
-  }),
+  default: function _default() {
+    return {
+      glsl: "",
+      defaultParams: {}
+    };
+  },
   type: Object
 })], GLTransitionvue_type_script_lang_tsx_GlTransition.prototype, "transition", void 0);
 
@@ -15227,10 +17000,7 @@ function normalizeComponent (
 var GLTransition_render, staticRenderFns
 
 
-function injectStyles (context) {
-  
-  
-}
+
 
 /* normalize component */
 
@@ -15239,10 +17009,10 @@ var component = normalizeComponent(
   GLTransition_render,
   staticRenderFns,
   false,
-  injectStyles,
+  null,
   null,
   null
-  ,true
+  
 )
 
 /* harmony default export */ var GLTransition = (component.exports);
@@ -15250,17 +17020,82 @@ var component = normalizeComponent(
 var texture = __webpack_require__("1d5b");
 var texture_default = /*#__PURE__*/__webpack_require__.n(texture);
 
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.find.js
+var es_array_find = __webpack_require__("7db0");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.array.for-each.js
+var es_array_for_each = __webpack_require__("4160");
+
 // EXTERNAL MODULE: ./node_modules/core-js/modules/es.object.assign.js
 var es_object_assign = __webpack_require__("cca6");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/es.object.keys.js
+var es_object_keys = __webpack_require__("b64b");
+
+// EXTERNAL MODULE: ./node_modules/core-js/modules/web.dom-collections.for-each.js
+var web_dom_collections_for_each = __webpack_require__("159b");
 
 // EXTERNAL MODULE: ./node_modules/core-js/modules/web.url.js
 var web_url = __webpack_require__("2b3d");
 
+// EXTERNAL MODULE: ./node_modules/regenerator-runtime/runtime.js
+var runtime = __webpack_require__("96cf");
+
+// CONCATENATED MODULE: ./node_modules/@babel/runtime/helpers/esm/asyncToGenerator.js
+
+
+
+function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
+  try {
+    var info = gen[key](arg);
+    var value = info.value;
+  } catch (error) {
+    reject(error);
+    return;
+  }
+
+  if (info.done) {
+    resolve(value);
+  } else {
+    Promise.resolve(value).then(_next, _throw);
+  }
+}
+
+function _asyncToGenerator(fn) {
+  return function () {
+    var self = this,
+        args = arguments;
+    return new Promise(function (resolve, reject) {
+      var gen = fn.apply(self, args);
+
+      function _next(value) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value);
+      }
+
+      function _throw(err) {
+        asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err);
+      }
+
+      _next(undefined);
+    });
+  };
+}
 // EXTERNAL MODULE: ./node_modules/gl-transitions/index.js
 var gl_transitions = __webpack_require__("25bb");
 var gl_transitions_default = /*#__PURE__*/__webpack_require__.n(gl_transitions);
 
 // CONCATENATED MODULE: ./src/components/util.ts
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -15281,19 +17116,20 @@ function SetCrossOrigin(src, target) {
  * @param transitionName string transitions name
  */
 
-const GetTransition = (transitionName, defaultParams) => {
-  const transition = gl_transitions_default.a.find(({
-    name
-  }) => transitionName === name);
+var util_GetTransition = function GetTransition(transitionName, defaultParams) {
+  var transition = gl_transitions_default.a.find(function (_ref) {
+    var name = _ref.name;
+    return transitionName === name;
+  });
 
   if (transition) {
-    transition.defaultParams && Object.keys(transition.defaultParams).forEach(keyName => {
-      const val = defaultParams[keyName];
+    transition.defaultParams && Object.keys(transition.defaultParams).forEach(function (keyName) {
+      var val = defaultParams[keyName];
       val !== undefined && transition.defaultParams && (transition.defaultParams[keyName] = val);
     });
     return transition;
   } else {
-    throw new Error(`未匹配到可用过渡模板：${transitionName}`);
+    throw new Error("\u672A\u5339\u914D\u5230\u53EF\u7528\u8FC7\u6E21\u6A21\u677F\uFF1A".concat(transitionName));
   }
 };
 /**
@@ -15303,7 +17139,7 @@ const GetTransition = (transitionName, defaultParams) => {
  */
 
 function GetContext(canvas, opts) {
-  const opts_ = Object.assign(opts || {}, {
+  var opts_ = Object.assign(opts || {}, {
     powerPreference: "default"
   });
   return canvas.getContext("webgl", opts_) || canvas.getContext("webgl-experimental", opts_) || canvas.getContext("experimental-webgl", opts_);
@@ -15313,41 +17149,68 @@ function GetContext(canvas, opts) {
  * @param src 图片地址
  */
 
-const LoadImg = src => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
+var LoadImg = function LoadImg(src) {
+  return new Promise(function (resolve, reject) {
+    var img = new Image();
     SetCrossOrigin(src, img);
 
-    img.onload = () => resolve(img);
+    img.onload = function () {
+      return resolve(img);
+    };
 
     img.onerror = reject;
     img.src = src;
   });
 };
 
-function startTracking({
-  target
-}, that, keyName) {
-  if (target) {
-    target.reqId = requestAnimationFrame(function play() {
-      that[keyName] = texture_default()(that.glContext, target);
-      that.progressSync = target.currentTime;
-      target.reqId = requestAnimationFrame(play);
+function startTracking(ev) {
+  var video = ev.target;
+
+  if (video) {
+    video.reqId = requestAnimationFrame(function play() {
+      video.reqId = requestAnimationFrame(play);
+      video.trackingCallBack();
     });
   }
 }
 
-const LoadVideo = (video, that, keyName) => {
-  return new Promise((resolve, reject) => {
-    SetCrossOrigin(video.src, video);
+function seekTrack(ev) {
+  var video = ev.target;
+  video && video.trackingCallBack();
+}
 
-    video.onloadeddata = () => resolve(video);
+function stopTracking(ev) {
+  var video = ev.target;
+  video && cancelAnimationFrame(video.reqId);
+}
+/**
+ * @description 通过HTML Element 加载视频
+ * @param video HTMLVideoElement
+ */
 
-    video.onplay = event => startTracking(event, that, keyName);
 
-    video.onpause = () => cancelAnimationFrame(video.reqId);
+var util_LoadVideo = function LoadVideo(video, that, keyName) {
+  var _that$glSize = _slicedToArray(that.glSize, 2),
+      width = _that$glSize[0],
+      height = _that$glSize[1];
 
-    video.onerror = reject;
+  video.width = width;
+  video.height = height;
+  SetCrossOrigin(video.src, video);
+
+  video.trackingCallBack = function () {
+    that[keyName] = texture_default()(that.glContext, video);
+    that.progressSync = video.currentTime;
+  };
+
+  return new Promise(function (resolve) {
+    video.removeEventListener("play", startTracking);
+    video.addEventListener("play", startTracking);
+    video.removeEventListener("pause", stopTracking);
+    video.addEventListener("pause", stopTracking);
+    video.removeEventListener("seeked", seekTrack);
+    video.addEventListener("seeked", seekTrack);
+    resolve(video);
   });
 };
 /**
@@ -15355,32 +17218,72 @@ const LoadVideo = (video, that, keyName) => {
  * @param source
  */
 
-async function LoadSource(source, that, keyName) {
-  let target;
+function LoadSource(_x) {
+  return _LoadSource.apply(this, arguments);
+}
 
-  if (typeof source === "string") {
-    if (/\.(jpg|png|jpeg)$/.test(source)) {
-      target = await LoadImg(source);
-    }
-  } else {
-    const tagName = source.tagName;
+function _LoadSource() {
+  _LoadSource = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(keyName) {
+    var source, target, tagName;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+      while (1) {
+        switch (_context.prev = _context.next) {
+          case 0:
+            source = keyName === "GlFrom" ? this.from : this.to;
 
-    switch (tagName) {
-      case "VIDEO":
-        target = await LoadVideo(source, that, keyName);
-        break;
+            if (!(typeof source === "string")) {
+              _context.next = 8;
+              break;
+            }
 
-      case "IMG":
-        target = source;
-        break;
+            if (!/\.(jpg|png|jpeg)$/.test(source)) {
+              _context.next = 6;
+              break;
+            }
 
-      case "CANVAS":
-        target = source;
-        break;
-    }
-  }
+            _context.next = 5;
+            return LoadImg(source);
 
-  return target;
+          case 5:
+            target = _context.sent;
+
+          case 6:
+            _context.next = 20;
+            break;
+
+          case 8:
+            tagName = source.tagName;
+            _context.t0 = tagName;
+            _context.next = _context.t0 === "VIDEO" ? 12 : _context.t0 === "IMG" ? 16 : _context.t0 === "CANVAS" ? 18 : 20;
+            break;
+
+          case 12:
+            _context.next = 14;
+            return util_LoadVideo(source, this, keyName);
+
+          case 14:
+            target = _context.sent;
+            return _context.abrupt("break", 20);
+
+          case 16:
+            target = source;
+            return _context.abrupt("break", 20);
+
+          case 18:
+            target = source;
+            return _context.abrupt("break", 20);
+
+          case 20:
+            return _context.abrupt("return", target);
+
+          case 21:
+          case "end":
+            return _context.stop();
+        }
+      }
+    }, _callee, this);
+  }));
+  return _LoadSource.apply(this, arguments);
 }
 // CONCATENATED MODULE: ./node_modules/cache-loader/dist/cjs.js??ref--15-0!./node_modules/thread-loader/dist/cjs.js!./node_modules/babel-loader/lib!./node_modules/ts-loader??ref--15-3!./node_modules/cache-loader/dist/cjs.js??ref--0-0!./node_modules/vue-loader/lib??vue-loader-options!./src/components/VueGlTransition.vue?vue&type=script&lang=tsx&
 
@@ -15435,7 +17338,7 @@ var VueGlTransitionvue_type_script_lang_tsx_VueGlTransition = /*#__PURE__*/funct
 
       this.loadedSourceFlag = false;
       var glContext_ = glContext || this.glContext;
-      glContext_ && Promise.all([LoadSource(this.from, this, "GlFrom"), LoadSource(this.to, this, "GlTo")]).then(function (_ref) {
+      glContext_ && Promise.all([LoadSource.call(this, "GlFrom"), LoadSource.call(this, "GlTo")]).then(function (_ref) {
         var _ref2 = _slicedToArray(_ref, 2),
             from = _ref2[0],
             to = _ref2[1];
@@ -15486,7 +17389,7 @@ var VueGlTransitionvue_type_script_lang_tsx_VueGlTransition = /*#__PURE__*/funct
   }, {
     key: "transition",
     get: function get() {
-      return GetTransition(this.name, this.defaultParams);
+      return util_GetTransition(this.name, this.defaultParams);
     }
   }, {
     key: "glContext",
